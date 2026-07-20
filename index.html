@@ -5,27 +5,49 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>리얼 포켓몬 GO 웹앱</title>
     <style>
-        body { margin: 0; padding: 0; font-family: sans-serif; background: #222; color: #fff; text-align: center; }
-        #status { padding: 20px; background: rgba(0,0,0,0.7); position: fixed; top: 0; width: 100%; z-index: 10; font-size: 14px; }
+        body { margin: 0; padding: 0; font-family: sans-serif; background: #222; color: #fff; text-align: center; overflow: hidden; }
+        #status { padding: 20px; background: rgba(0,0,0,0.7); position: fixed; top: 0; width: 100%; z-index: 10; font-size: 14px; box-sizing: border-box; }
         #camera-container { width: 100vw; height: 100vh; position: relative; overflow: hidden; background: #000; }
         video { width: 100%; height: 100%; object-fit: cover; }
-        #ar-item { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: none; cursor: pointer; transition: transform 0.2s; }
+        #ar-item { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: none; cursor: pointer; transition: transform 0.2s; z-index: 5; }
         #ar-item:active { transform: translate(-50%, -50%) scale(0.8); }
-        .btn { background: #ffcb05; color: #3267b2; border: none; padding: 15px 30px; font-size: 18px; font-weight: bold; border-radius: 25px; margin-top: 40vh; cursor: pointer; }
+        
+        /* 🌟 시작 화면 정중앙 정렬 및 스타일 개선 */
+        #start-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; width: 100vw; position: fixed; top: 0; left: 0; z-index: 20; background: #222; }
+        .input-field { padding: 15px; font-size: 16px; border: 3px solid #3267b2; background: #fff; color: #333; border-radius: 15px; margin-bottom: 20px; width: 220px; text-align: center; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .input-field:focus { border-color: #ffcb05; outline: none; }
+        .btn { background: #ffcb05; color: #3267b2; border: none; padding: 15px 40px; font-size: 18px; font-weight: bold; border-radius: 25px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        
+        /* 커스텀 모달 스타일 */
+        #custom-modal { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); z-index: 100; justify-content: center; align-items: center; }
+        .modal-content { background: #333; padding: 30px; border-radius: 20px; border: 3px solid #ffcb05; max-width: 80%; width: 300px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        .modal-text { font-size: 16px; color: #fff; line-height: 1.6; margin-bottom: 25px; word-break: keep-all; }
+        .modal-btn { background: #ffcb05; color: #3267b2; border: none; padding: 12px 30px; font-size: 16px; font-weight: bold; border-radius: 15px; cursor: pointer; width: 100%; }
     </style>
 </head>
 <body>
 
+    <!-- 상단 상태 표시줄 -->
     <div id="status">대기 중... 위치 권한과 카메라 권한이 필요합니다.</div>
 
+    <!-- 🌟 참여자 이름을 입력받는 시작 화면 구역 -->
     <div id="start-screen">
+        <input type="text" id="trainer-name" class="input-field" placeholder="트레이너 이름을 입력하세요" maxlength="12">
         <button class="btn" onclick="initGame()">게임 시작하기 🎮</button>
     </div>
 
+    <!-- AR 카메라 화면 -->
     <div id="camera-container" style="display: none;">
         <video id="video" autoplay playsinline></video>
-        <!-- 스프레드시트 설정대로 이미지와 크기가 변합니다 -->
         <img id="ar-item" src="" alt="아이템" onclick="catchItem()">
+    </div>
+
+    <!-- 커스텀 모달 레이아웃 -->
+    <div id="custom-modal">
+        <div class="modal-content">
+            <div id="modal-text" class="modal-text">메시지 내용</div>
+            <button class="modal-btn" onclick="closeModal()">확인</button>
+        </div>
     </div>
 
     <script>
@@ -36,8 +58,40 @@
         let userLat = 0;
         let userLng = 0;
         let currentNearbyItem = null;
+        let modalCallback = null;
+        
+        // 🌟 전역으로 사용할 트레이너 이름 변수
+        let currentTrainerName = "guest";
 
+        // 커스텀 모달 띄우기
+        function showModal(msg, callback = null) {
+            document.getElementById('modal-text').innerHTML = msg;
+            document.getElementById('custom-modal').style.display = 'flex';
+            modalCallback = callback;
+        }
+
+        // 커스텀 모달 닫기
+        function closeModal() {
+            document.getElementById('custom-modal').style.display = 'none';
+            if (modalCallback) {
+                modalCallback();
+                modalCallback = null;
+            }
+        }
+
+        // 게임 초기화
         async function initGame() {
+            // 🌟 입력받은 이름을 가져와 검사합니다.
+            const nameInput = document.getElementById('trainer-name').value.trim();
+            
+            if (!nameInput) {
+                showModal("🎒 <b>이름 입력 필요</b><br><br>게임을 시작하기 전에 트레이너 이름을 입력해 주세요!");
+                return;
+            }
+            
+            // 입력받은 이름을 저장합니다.
+            currentTrainerName = nameInput;
+
             document.getElementById('start-screen').style.display = 'none';
             document.getElementById('camera-container').style.display = 'block';
             updateStatus("구글 시트에서 아이템 정보를 불러오는 중...");
@@ -47,7 +101,7 @@
                 const json = await res.json();
                 if(json.status === "success") {
                     items = json.data;
-                    updateStatus(`아이템 ${items.length}개 로드 완료! GPS 연결 중...`);
+                    updateStatus(`반가워요, ${currentTrainerName} 트레이너님! GPS 연결 중...`);
                     startLocationTracking();
                     startCamera();
                 }
@@ -56,15 +110,17 @@
             }
         }
 
+        // 스마트폰 카메라 구동
         async function startCamera() {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
                 document.getElementById('video').srcObject = stream;
             } catch (err) {
-                alert("카메라 권한이 필요하거나 지원하지 않는 브라우저입니다.");
+                showModal("📷 카메라 권한이 필요하거나<br>지원하지 않는 브라우저입니다.");
             }
         }
 
+        // 실시간 GPS 추적
         function startLocationTracking() {
             if (!navigator.geolocation) {
                 updateStatus("이 기기는 GPS를 지원하지 않습니다.");
@@ -79,9 +135,10 @@
                 },
                 (err) => { updateStatus("GPS 오류: " + err.message); },
                 { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
-            );
+            )
         }
 
+        // 거리 계산 (하버사인)
         function getDistance(lat1, lng1, lat2, lng2) {
             const R = 6371e3;
             const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -93,14 +150,13 @@
             return R * c; 
         }
 
-        // ⭐ 5. 주변 아이템 검사 (구글 시트의 E열: 접근반경 활용)
+        // 주변 아이템 검사
         function checkNearbyItems() {
             let found = false;
             
             for (let item of items) {
                 const dist = getDistance(userLat, userLng, item.latitude, item.longitude);
                 
-                // 구글 시트에서 설정한 반경(radius) 이내로 들어왔는지 확인 (기본값 15m)
                 if (dist <= item.radius) {
                     updateStatus(`🚨 근처에 [${item.name}]이(가) 나타났습니다! (거리: ${Math.round(dist)}m)`);
                     showARItem(item);
@@ -110,37 +166,38 @@
             }
 
             if (!found) {
-                updateStatus(`주변 탐색 중... 내 위치: ${userLat.toFixed(5)}, ${userLng.toFixed(5)}`);
+                updateStatus(`주변 탐색 중... 트레이너: ${currentTrainerName}`);
                 document.getElementById('ar-item').style.display = 'none';
                 currentNearbyItem = null;
             }
         }
 
-        // ⭐ 6. 화면에 아이템 띄우기 (구글 시트의 F열: 아이템크기 활용)
+        // 화면에 아이템 띄우기
         function showARItem(item) {
             if (currentNearbyItem?.id === item.id) return;
             currentNearbyItem = item;
             
             const imgElement = document.getElementById('ar-item');
             imgElement.src = item.imageUrl;
-            
-            // 구글 시트에서 설정한 크기(size)를 픽셀(width)로 적용 (기본값 150px)
             imgElement.style.width = item.size + "px";
-            
             imgElement.style.display = 'block';
+            
             if (navigator.vibrate) navigator.vibrate(500);
         }
 
+        // 아이템 클릭 시 잡기
         async function catchItem() {
             if (!currentNearbyItem) return;
             
-            updateStatus(`진행 중... ${currentNearbyItem.name} 잡는 중!`);
+            const caughtItem = currentNearbyItem; 
+            updateStatus(`진행 중... ${caughtItem.name} 잡는 중!`);
             document.getElementById('ar-item').style.display = 'none';
 
+            // 🌟 고정값이 아닌 유저가 입력한 대상을 페이로드로 전송합니다.
             const payload = {
-                userId: "Trainer_Hong",
-                itemId: currentNearbyItem.id,
-                itemName: currentNearbyItem.name
+                userId: currentTrainerName,
+                itemId: caughtItem.id,
+                itemName: caughtItem.name
             };
 
             try {
@@ -151,12 +208,19 @@
                 const json = await res.json();
                 
                 if (json.status === "success") {
-                    alert(`🎉 축하합니다! ${currentNearbyItem.name}을(를) 잡아서 인벤토리에 저장했습니다!`);
+                    items = items.filter(item => item.id !== caughtItem.id);
+                    currentNearbyItem = null; 
+                    
+                    showModal(`🎉 <b>획득 성공!</b><br><br>[${caughtItem.name}]을(를) 잡아서 인벤토리에 안전하게 저장했습니다.`, () => {
+                        checkNearbyItems();
+                    });
                 } else {
-                    alert("저장 실패: " + json.message);
+                    currentNearbyItem = null; 
+                    showModal(`❌ <b>저장 실패</b><br><br>${json.message}`);
                 }
             } catch (err) {
-                alert("통신 에러로 놓쳤습니다: " + err);
+                currentNearbyItem = null; 
+                showModal(`⚠️ <b>통신 에러</b><br><br>네트워크가 불안정하여 아이템을 놓쳤습니다.`);
             }
         }
 
