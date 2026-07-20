@@ -7,7 +7,7 @@
     
     <script>
         // =================================================================
-        // ⚠️ [가장 중요] 본인의 구글 앱스 스크립트 웹앱 URL을 아래에 넣으세요!
+        // 🌟 [배포 주소 고정] 지정해주신 구글 앱스 스크립트 웹앱 URL이 반영되었습니다.
         // =================================================================
         const GAS_URL = "https://script.google.com/macros/s/AKfycbw29yoTGd3jErAGBo-WOSa53t5CfYWdGGUx0dTKuyu4oQLvmRKvAV4N6sk9RKQbt9Ku/exec"; 
     </script>
@@ -191,9 +191,8 @@
         let currentNearbyItem = null;
         let modalCallback = null;
         let currentExplorerName = "guest";
-        
-        // 🌟 [신규 변수] 보물을 구글 서버로 전송 중인지 판별하는 플래그
         let isCatching = false;
+        let wakeLock = null;
 
         function showModal(msg, callback = null) {
             document.getElementById('modal-text').innerHTML = msg;
@@ -206,6 +205,17 @@
             if (modalCallback) {
                 modalCallback();
                 modalCallback = null;
+            }
+        }
+
+        async function requestWakeLock() {
+            if ('wakeLock' in navigator) {
+                try {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                    console.log("화면 꺼짐 방지 레이더 작동 중... 💡");
+                } catch (err) {
+                    console.warn(`화면 고정 실패: ${err.message}`);
+                }
             }
         }
 
@@ -232,6 +242,8 @@
                 document.getElementById('view-inventory-btn').style.display = 'none';
                 return;
             }
+
+            await requestWakeLock();
 
             updateStatus("구글 시트에서 보물 정보를 안전하게 불러오는 중...");
             try {
@@ -287,7 +299,6 @@
         }
 
         function checkNearbyItems() {
-            // 🌟 [버그 해결 핵심] 보물을 전송(가져오기) 중일 때는 GPS 레이더가 메시지를 덮어쓰지 못하게 전면 차단
             if (isCatching) return; 
             
             let found = false;
@@ -323,10 +334,9 @@
         }
 
         async function catchItem() {
-            // 가져오는 도중 또 터치하는 중복 클릭 방지 세팅 포함
             if (!currentNearbyItem || isCatching) return;
             
-            isCatching = true; // 🌟 가져오기 프로세스 시작 (GPS 상단 텍스트 제어 잠금)
+            isCatching = true; 
             const caughtItem = currentNearbyItem; 
             
             updateStatus(`[${caughtItem.name}]을(를) 꽉 붙들어 가져오고 있습니다.`); 
@@ -350,17 +360,17 @@
                     currentNearbyItem = null; 
                     
                     showModal(`🎉 <b>발견 및 획득 성공!!</b><br><br>[${caughtItem.name}]을(를) 찾아내어 배낭 속에 잘 넣어두었습니다.`, () => {
-                        isCatching = false; // 🌟 유저가 팝업 [확인]을 눌러 완전히 끝났을 때 비로소 잠금 해제
+                        isCatching = false; 
                         checkNearbyItems();
                     });
                 } else {
                     currentNearbyItem = null; 
-                    isCatching = false; // 실패 시 잠금 해제
+                    isCatching = false; 
                     showModal(`❌ <b>저장 실패</b><br><br>${json.message}`);
                 }
             } catch (err) {
                 currentNearbyItem = null; 
-                isCatching = false; // 에러 시 잠금 해제
+                isCatching = false; 
                 showModal(`⚠️ <b>통신 에러</b><br><br>네트워크 연결이 원활하지 않아 보물을 놓쳤습니다.`);
             }
         }
@@ -412,6 +422,12 @@
         function updateStatus(msg) {
             document.getElementById('status').innerText = msg;
         }
+
+        document.addEventListener('visibilitychange', async () => {
+            if (wakeLock !== null && document.visibilityState === 'visible') {
+                await requestWakeLock();
+            }
+        });
     </script>
 </body>
 </html>
