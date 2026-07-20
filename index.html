@@ -16,37 +16,32 @@
 </head>
 <body>
 
-    <!-- 상태 표시창 -->
     <div id="status">대기 중... 위치 권한과 카메라 권한이 필요합니다.</div>
 
-    <!-- 게임 시작 버튼 (브라우저 보안상 유저가 직접 클릭해야 카메라가 켜집니다) -->
     <div id="start-screen">
         <button class="btn" onclick="initGame()">게임 시작하기 🎮</button>
     </div>
 
-    <!-- 카메라 화면 및 AR 아이템 배치 구역 -->
     <div id="camera-container" style="display: none;">
         <video id="video" autoplay playsinline></video>
-        <!-- 스프레드시트에서 가져온 이미지가 여기에 띄워집니다 -->
+        <!-- 스프레드시트 설정대로 이미지와 크기가 변합니다 -->
         <img id="ar-item" src="" alt="아이템" onclick="catchItem()">
     </div>
 
     <script>
         // ⚠️ 본인의 구글 앱스 스크립트 웹앱 URL로 교체하세요!
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbweszwcZIRO-i9Ods7pSMcdNh77rbw6V8xhWNf9xqQihyW_JPl7ErGS84S32o-4zQ8S/exec"; 
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbzwJXUd3yVxReX_Xv3xmH9sGa0iytqouuyNZh-XwLNJ25NO6nHr4SA0_y3fz095lVEf/exec"; 
         
         let items = [];
         let userLat = 0;
         let userLng = 0;
         let currentNearbyItem = null;
 
-        // 1. 게임 초기화 (카메라 및 GPS 켜기)
         async function initGame() {
             document.getElementById('start-screen').style.display = 'none';
             document.getElementById('camera-container').style.display = 'block';
             updateStatus("구글 시트에서 아이템 정보를 불러오는 중...");
 
-            // 구글 시트 데이터 가져오기
             try {
                 const res = await fetch(GAS_URL);
                 const json = await res.json();
@@ -61,7 +56,6 @@
             }
         }
 
-        // 2. 스마트폰 카메라 구동
         async function startCamera() {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
@@ -71,7 +65,6 @@
             }
         }
 
-        // 3. 실시간 GPS 추적
         function startLocationTracking() {
             if (!navigator.geolocation) {
                 updateStatus("이 기기는 GPS를 지원하지 않습니다.");
@@ -89,29 +82,26 @@
             );
         }
 
-        // 4. 두 좌표 사이의 거리 계산 (하버사인 공식)
         function getDistance(lat1, lng1, lat2, lng2) {
-            const R = 6371e3; // 지구 반지름 (미터)
+            const R = 6371e3;
             const dLat = (lat2 - lat1) * Math.PI / 180;
             const dLng = (lng2 - lng1) * Math.PI / 180;
             const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
                       Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
                       Math.sin(dLng/2) * Math.sin(dLng/2);
             const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-            return R * c; // 미터 단위 리턴
+            return R * c; 
         }
 
-        // 5. 주변에 아이템이 있는지 검사
+        // ⭐ 5. 주변 아이템 검사 (구글 시트의 E열: 접근반경 활용)
         function checkNearbyItems() {
             let found = false;
             
             for (let item of items) {
                 const dist = getDistance(userLat, userLng, item.latitude, item.longitude);
                 
-                // 설정한 크기(반경)가 없으면 기본 15미터 이내 접근 시 출현
-                const limitDist = item.size ? parseFloat(item.size) : 15; 
-
-                if (dist <= limitDist) {
+                // 구글 시트에서 설정한 반경(radius) 이내로 들어왔는지 확인 (기본값 15m)
+                if (dist <= item.radius) {
                     updateStatus(`🚨 근처에 [${item.name}]이(가) 나타났습니다! (거리: ${Math.round(dist)}m)`);
                     showARItem(item);
                     found = true;
@@ -126,20 +116,21 @@
             }
         }
 
-        // 6. 화면에 아이템 이미지 띄우기
+        // ⭐ 6. 화면에 아이템 띄우기 (구글 시트의 F열: 아이템크기 활용)
         function showARItem(item) {
-            if (currentNearbyItem?.id === item.id) return; // 이미 떠 있는 아이템이면 패스
+            if (currentNearbyItem?.id === item.id) return;
             currentNearbyItem = item;
             
             const imgElement = document.getElementById('ar-item');
             imgElement.src = item.imageUrl;
-            imgElement.style.display = 'block';
             
-            // 진동 알림 (지원하는 안드로이드 기기만)
+            // 구글 시트에서 설정한 크기(size)를 픽셀(width)로 적용 (기본값 150px)
+            imgElement.style.width = item.size + "px";
+            
+            imgElement.style.display = 'block';
             if (navigator.vibrate) navigator.vibrate(500);
         }
 
-        // 7. 아이템 클릭 시 잡기 (구글 시트에 POST 요청)
         async function catchItem() {
             if (!currentNearbyItem) return;
             
@@ -147,7 +138,7 @@
             document.getElementById('ar-item').style.display = 'none';
 
             const payload = {
-                userId: "Trainer_Hong", // 유저 아이디 임의 설정
+                userId: "Trainer_Hong",
                 itemId: currentNearbyItem.id,
                 itemName: currentNearbyItem.name
             };
