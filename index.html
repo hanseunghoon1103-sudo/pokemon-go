@@ -3,24 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>리얼 포켓몬 GO 웹앱</title>
+    <title>리얼 탐험가 보물찾기 웹앱</title>
     <style>
-        body { margin: 0; padding: 0; font-family: sans-serif; background: #222; color: #fff; text-align: center; overflow: hidden; }
+        /* 🌟 전체 화면 배경에 제공해주신 드라이브 이미지 반영 */
+        body { 
+            margin: 0; padding: 0; 
+            font-family: sans-serif; 
+            background-image: url('https://drive.google.com/uc?export=view&id=1U47xmLADk6PUCKF97rNNMxjXBTDyJIWx');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            color: #fff; text-align: center; overflow: hidden; 
+        }
+        
         #status { padding: 20px; background: rgba(0,0,0,0.7); position: fixed; top: 0; width: 100%; z-index: 10; font-size: 14px; box-sizing: border-box; }
-        #camera-container { width: 100vw; height: 100vh; position: relative; overflow: hidden; background: #000; }
+        #camera-container { width: 100vw; height: 100vh; position: relative; overflow: hidden; background: transparent; }
         video { width: 100%; height: 100%; object-fit: cover; }
+        
         #ar-item { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: none; cursor: pointer; transition: transform 0.2s; z-index: 5; }
         #ar-item:active { transform: translate(-50%, -50%) scale(0.8); }
         
-        /* 🌟 시작 화면 정중앙 정렬 및 스타일 개선 */
-        #start-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; width: 100vw; position: fixed; top: 0; left: 0; z-index: 20; background: #222; }
-        .input-field { padding: 15px; font-size: 16px; border: 3px solid #3267b2; background: #fff; color: #333; border-radius: 15px; margin-bottom: 20px; width: 220px; text-align: center; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
-        .input-field:focus { border-color: #ffcb05; outline: none; }
-        .btn { background: #ffcb05; color: #3267b2; border: none; padding: 15px 40px; font-size: 18px; font-weight: bold; border-radius: 25px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        /* 🌟 [디자인 변경] 버튼 아랫부분이 화면의 정확한 중간(50%)에 오도록 수식 배치 */
+        #start-screen { width: 100vw; height: 100vh; position: fixed; top: 0; left: 0; z-index: 20; background: rgba(0, 0, 0, 0.4); }
+        #start-screen-content {
+            position: absolute;
+            bottom: 50%; /* 하단 기준선을 화면 중앙(50%)에 고정 */
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
         
-        /* 커스텀 모달 스타일 */
-        #custom-modal { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); z-index: 100; justify-content: center; align-items: center; }
-        .modal-content { background: #333; padding: 30px; border-radius: 20px; border: 3px solid #ffcb05; max-width: 80%; width: 300px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        .input-field { padding: 15px; font-size: 16px; border: 3px solid #3267b2; background: #fff; color: #333; border-radius: 15px; margin-bottom: 15px; width: 220px; text-align: center; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .input-field:focus { border-color: #ffcb05; outline: none; }
+        .btn { background: #ffcb05; color: #3267b2; border: none; padding: 15px 40px; font-size: 18px; font-weight: bold; border-radius: 25px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); margin: 0; }
+        
+        /* 🌟 [디자인 변경] 알림 팝업창이 위에서부터 1/3(33%) 지점에 표시되도록 조정 */
+        #custom-modal { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.7); z-index: 100; justify-content: center; align-items: flex-start; }
+        .modal-content { 
+            background: rgba(40, 40, 40, 0.95); 
+            padding: 30px; 
+            border-radius: 20px; 
+            border: 3px solid #ffcb05; 
+            max-width: 80%; 
+            width: 300px; 
+            text-align: center; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
+            margin-top: 33vh; /* 🌟 위에서 1/3 지점으로 내리기 */
+        }
         .modal-text { font-size: 16px; color: #fff; line-height: 1.6; margin-bottom: 25px; word-break: keep-all; }
         .modal-btn { background: #ffcb05; color: #3267b2; border: none; padding: 12px 30px; font-size: 16px; font-weight: bold; border-radius: 15px; cursor: pointer; width: 100%; }
     </style>
@@ -30,19 +62,22 @@
     <!-- 상단 상태 표시줄 -->
     <div id="status">대기 중... 위치 권한과 카메라 권한이 필요합니다.</div>
 
-    <!-- 🌟 참여자 이름을 입력받는 시작 화면 구역 -->
+    <!-- 시작 화면 구역 -->
     <div id="start-screen">
-        <input type="text" id="trainer-name" class="input-field" placeholder="트레이너 이름을 입력하세요" maxlength="12">
-        <button class="btn" onclick="initGame()">게임 시작하기 🎮</button>
+        <div id="start-screen-content">
+            <!-- 🌟 탐험가 컨셉 반영 -->
+            <input type="text" id="explorer-name" class="input-field" placeholder="탐험가 이름을 입력하세요" maxlength="12">
+            <button class="btn" onclick="initGame()">탐험 시작하기 🧭</button>
+        </div>
     </div>
 
     <!-- AR 카메라 화면 -->
     <div id="camera-container" style="display: none;">
         <video id="video" autoplay playsinline></video>
-        <img id="ar-item" src="" alt="아이템" onclick="catchItem()">
+        <img id="ar-item" src="" alt="보물" onclick="catchItem()">
     </div>
 
-    <!-- 커스텀 모달 레이아웃 -->
+    <!-- 커스텀 모달 레이아웃 (1/3 지점 출현) -->
     <div id="custom-modal">
         <div class="modal-content">
             <div id="modal-text" class="modal-text">메시지 내용</div>
@@ -52,7 +87,7 @@
 
     <script>
         // ⚠️ 본인의 구글 앱스 스크립트 웹앱 URL로 교체하세요!
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbzwJXUd3yVxReX_Xv3xmH9sGa0iytqouuyNZh-XwLNJ25NO6nHr4SA0_y3fz095lVEf/exec"; 
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbwdFH6cFIrwi_RiZKJtGaHgfwn4amFrzjzXUM9sy78RmH6LVAT3556Hk67tEfsKyh6H/exec"; 
         
         let items = [];
         let userLat = 0;
@@ -60,17 +95,15 @@
         let currentNearbyItem = null;
         let modalCallback = null;
         
-        // 🌟 전역으로 사용할 트레이너 이름 변수
-        let currentTrainerName = "guest";
+        // 🌟 탐험가 변수 세팅
+        let currentExplorerName = "guest";
 
-        // 커스텀 모달 띄우기
         function showModal(msg, callback = null) {
             document.getElementById('modal-text').innerHTML = msg;
             document.getElementById('custom-modal').style.display = 'flex';
             modalCallback = callback;
         }
 
-        // 커스텀 모달 닫기
         function closeModal() {
             document.getElementById('custom-modal').style.display = 'none';
             if (modalCallback) {
@@ -81,36 +114,35 @@
 
         // 게임 초기화
         async function initGame() {
-            // 🌟 입력받은 이름을 가져와 검사합니다.
-            const nameInput = document.getElementById('trainer-name').value.trim();
+            // 🌟 탐험가 입력 체크
+            const nameInput = document.getElementById('explorer-name').value.trim();
             
             if (!nameInput) {
-                showModal("🎒 <b>이름 입력 필요</b><br><br>게임을 시작하기 전에 트레이너 이름을 입력해 주세요!");
+                showModal("🎒 <b>이름 입력 필요</b><br><br>탐험을 시작하기 전에 탐험가 이름을 입력해 주세요!");
                 return;
             }
             
-            // 입력받은 이름을 저장합니다.
-            currentTrainerName = nameInput;
+            currentExplorerName = nameInput;
 
             document.getElementById('start-screen').style.display = 'none';
             document.getElementById('camera-container').style.display = 'block';
-            updateStatus("구글 시트에서 아이템 정보를 불러오는 중...");
+            updateStatus("구글 시트에서 보물 정보를 불러오는 중...");
 
             try {
                 const res = await fetch(GAS_URL);
                 const json = await res.json();
                 if(json.status === "success") {
                     items = json.data;
-                    updateStatus(`반가워요, ${currentTrainerName} 트레이너님! GPS 연결 중...`);
+                    updateStatus(`반가워요, ${currentExplorerName} 탐험가님! GPS 연결 중...`);
                     startLocationTracking();
                     startCamera();
                 }
             } catch (err) {
-                updateStatus("데이터 로딩 실패: " + err);
+                updateStatus("보물 로딩 실패: " + err);
             }
         }
 
-        // 스마트폰 카메라 구동
+        // 카메라 구동
         async function startCamera() {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
@@ -166,7 +198,7 @@
             }
 
             if (!found) {
-                updateStatus(`주변 탐색 중... 트레이너: ${currentTrainerName}`);
+                updateStatus(`보물 탐색 중... 탐험가: ${currentExplorerName}`);
                 document.getElementById('ar-item').style.display = 'none';
                 currentNearbyItem = null;
             }
@@ -190,12 +222,12 @@
             if (!currentNearbyItem) return;
             
             const caughtItem = currentNearbyItem; 
-            updateStatus(`진행 중... ${caughtItem.name} 잡는 중!`);
+            updateStatus(`진행 중... ${caughtItem.name} 획득 중!`);
             document.getElementById('ar-item').style.display = 'none';
 
-            // 🌟 고정값이 아닌 유저가 입력한 대상을 페이로드로 전송합니다.
+            // 🌟 탐험가 이름 매칭 전송
             const payload = {
-                userId: currentTrainerName,
+                userId: currentExplorerName,
                 itemId: caughtItem.id,
                 itemName: caughtItem.name
             };
@@ -211,7 +243,8 @@
                     items = items.filter(item => item.id !== caughtItem.id);
                     currentNearbyItem = null; 
                     
-                    showModal(`🎉 <b>획득 성공!</b><br><br>[${caughtItem.name}]을(를) 잡아서 인벤토리에 안전하게 저장했습니다.`, () => {
+                    // 🌟 위에서 1/3 지점에 나타나는 모달 창 메시지
+                    showModal(`🎉 <b>발견 및 획득 성공!</b><br><br>[${caughtItem.name}]을(를) 찾아내어 저장목록에 기록했습니다.`, () => {
                         checkNearbyItems();
                     });
                 } else {
@@ -220,7 +253,7 @@
                 }
             } catch (err) {
                 currentNearbyItem = null; 
-                showModal(`⚠️ <b>통신 에러</b><br><br>네트워크가 불안정하여 아이템을 놓쳤습니다.`);
+                showModal(`⚠️ <b>통신 에러</b><br><br>네트워크 연결이 원활하지 않아 보물을 놓쳤습니다.`);
             }
         }
 
