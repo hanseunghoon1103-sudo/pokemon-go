@@ -7,16 +7,14 @@
     
     <script>
         // =================================================================
-        // ⚠️ [가장 중요] 본인의 구글 앱스 스크립트 웹앱 URL을 아래에 넣으세요!
+        // ⚠️ [가장 중요] 本人의 구글 앱스 스크립트 웹앱 URL을 아래에 넣으세요!
         // =================================================================
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbwyeammvvEgucRSbx2Fql1W5MFrEESeXDQB3wvjnZpgIUszXwNaJ3pKQcgULIoZkmXc/exec"; 
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbw29yoTGd3jErAGBo-WOSa53t5CfYWdGGUx0dTKuyu4oQLvmRKvAV4N6sk9RKQbt9Ku/exec"; 
     </script>
 
     <style>
-        /* 화면 높이를 고정하여 모바일 브라우저 튕김 및 배경 깨짐 방지 */
         html, body { width: 100%; height: 100%; margin: 0; padding: 0; }
         
-        /* 🌟 [배경 이미지] 깃허브에 새로 올리신 treasure.jpg 경로 완벽 반영 */
         body { 
             font-family: sans-serif; 
             background-color: #222;
@@ -35,7 +33,6 @@
         #ar-item { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: none; cursor: pointer; transition: transform 0.2s; z-index: 5; }
         #ar-item:active { transform: translate(-50%, -50%) scale(0.8); }
         
-        /* [UX] 키보드 간섭을 방지하기 위한 최상단(8%) 고정 스타일 */
         #start-screen { width: 100vw; height: 100vh; position: fixed; top: 0; left: 0; z-index: 20; background: rgba(0, 0, 0, 0.3); }
         #start-screen-content {
             position: absolute;
@@ -51,7 +48,6 @@
         .input-field:focus { border-color: #ffcb05; outline: none; }
         .btn { background: #ffcb05; color: #3267b2; border: none; padding: 15px 40px; font-size: 18px; font-weight: bold; border-radius: 25px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
         
-        /* [UI] 알림 팝업창 위치 화면 최상단 1/5(20vh) 지점 고정 */
         #custom-modal { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.7); z-index: 100; justify-content: center; align-items: flex-start; }
         .modal-content { 
             background: rgba(40, 40, 40, 0.95); 
@@ -67,7 +63,6 @@
         .modal-text { font-size: 16px; color: #fff; line-height: 1.6; margin-bottom: 25px; word-break: keep-all; }
         .modal-btn { background: #ffcb05; color: #3267b2; border: none; padding: 12px 30px; font-size: 16px; font-weight: bold; border-radius: 15px; cursor: pointer; width: 100%; }
 
-        /* 🌟 [UI 개선] 한 줄 표기 강제 및 너비 자동 확장 세팅 */
         #view-inventory-btn {
             position: fixed;
             bottom: 25px;
@@ -84,11 +79,11 @@
             z-index: 15;
             box-shadow: 0 4px 12px rgba(0,0,0,0.6);
             display: none; 
-            white-space: nowrap; /* 글자 줄바꿈 절대 방지 */
-            width: max-content;  /* 글자 길이에 맞춰 가로폭 유연하게 확장 */
+            white-space: nowrap; 
+            width: max-content;  
         }
 
-        /* 보물 리스트 뷰 */
+        /* 🌟 [배낭 고정 뷰] 모바일 터치 스크롤 꼬임 방지를 위한 전체 레이아웃 구조 개편 */
         #inventory-screen {
             display: none;
             position: fixed;
@@ -96,17 +91,50 @@
             width: 100vw; height: 100vh;
             background: rgba(25, 25, 25, 0.98);
             z-index: 30;
-            overflow-y: auto;
             box-sizing: border-box;
-            padding: 80px 20px 100px 20px;
+            padding: 75px 20px 95px 20px;
         }
-        .inv-title { font-size: 22px; color: #ffcb05; margin-bottom: 20px; font-weight: bold; }
-        #inventory-list { width: 100%; max-width: 400px; margin: 0 auto; }
-        .inv-card { background: rgba(255,255,255,0.08); padding: 15px; border-radius: 12px; margin-bottom: 12px; text-align: left; border-left: 5px solid #ffcb05; }
-        .inv-card-title { font-size: 16px; font-weight: bold; color: #fff; margin-bottom: 5px; }
-        .inv-card-date { font-size: 12px; color: #aaa; }
+        .inv-title { font-size: 20px; color: #ffcb05; margin-bottom: 15px; font-weight: bold; }
+        
+        /* 🌟 [스크롤 특화 박스] 상/하단 바를 제외한 본문 영역에만 절대 스크롤 부여 */
+        #inventory-scroll-box {
+            width: 100%;
+            max-width: 420px;
+            margin: 0 auto;
+            height: calc(100vh - 200px); /* 헤더, 푸터 높이를 제외한 가변 높이 */
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch; /* iOS 부드러운 스크롤 보장 */
+            padding-right: 5px;
+        }
+        
+        #inventory-list { width: 100%; }
+        
+        /* 🌟 [인벤토리 카드 디자인] 좌측 이미지 배치를 위한 Flex 레이아웃 도입 */
+        .inv-card { 
+            background: rgba(255,255,255,0.08); 
+            padding: 12px; 
+            border-radius: 12px; 
+            margin-bottom: 12px; 
+            text-align: left; 
+            border-left: 5px solid #ffcb05; 
+            display: flex; 
+            align-items: center; 
+        }
+        .inv-card-img { 
+            width: 55px; height: 55px; 
+            object-fit: contain; 
+            margin-right: 15px; 
+            border-radius: 8px; 
+            background: rgba(255,255,255,0.12); 
+            padding: 4px; 
+            box-sizing: border-box; 
+        }
+        .inv-card-info { flex: 1; }
+        .inv-card-title { font-size: 15px; font-weight: bold; color: #fff; margin-bottom: 4px; }
+        .inv-card-date { font-size: 11px; color: #aaa; }
+        
         .inv-empty { font-size: 16px; color: #aaa; margin-top: 50px; }
-        .inv-footer { position: fixed; bottom: 0; left: 0; width: 100%; padding: 20px 0; background: rgba(25,25,25,0.95); text-align: center; }
+        .inv-footer { position: fixed; bottom: 0; left: 0; width: 100%; padding: 18px 0; background: rgba(25,25,25,0.95); text-align: center; }
     </style>
 </head>
 <body>
@@ -129,10 +157,16 @@
 
     <button id="view-inventory-btn" onclick="openInventory()">🎒 내가 저장한 보물 확인</button>
 
-    <!-- 보물 리스트 스크린 -->
+    <!-- 보물 리스트 스크린 (독립형 스크롤 시스템 적용) -->
     <div id="inventory-screen">
-        <div class="inv-title">🎒 <span id="player-title"></span>의 배낭</div>
-        <div id="inventory-list"></div>
+        <!-- 🌟 [문구 변경] 명칭을 대괄호 형식으로 변경 -->
+        <div class="inv-title">🎒 [<span id="player-title"></span>]님의 배낭</div>
+        
+        <!-- 🌟 독립 스크롤 컨테이너 적용 구역 -->
+        <div id="inventory-scroll-box">
+            <div id="inventory-list"></div>
+        </div>
+        
         <div class="inv-footer">
             <button class="btn" onclick="closeInventory()">🧭 계속 탐험하기</button>
         </div>
@@ -249,13 +283,13 @@
             }
 
             if (!found) {
-                // 🌟 [문구 변경] 괄호 포맷 완벽 반영
                 updateStatus(`보물 탐색 중... [탐험가: ${currentExplorerName}]`);
                 document.getElementById('ar-item').style.display = 'none';
                 currentNearbyItem = null;
             }
         }
 
+        // 화면에 아이템 띄우기
         function showARItem(item) {
             if (currentNearbyItem?.id === item.id) return;
             currentNearbyItem = item;
@@ -272,7 +306,6 @@
             if (!currentNearbyItem) return;
             
             const caughtItem = currentNearbyItem; 
-            // 🌟 [문구 변경] 지정해주신 가져오기 멘트 적용
             updateStatus(`[${caughtItem.name}]을(를) 꽉 붙들어 가져오고 있습니다.`); 
             document.getElementById('ar-item').style.display = 'none';
 
@@ -293,8 +326,8 @@
                     items = items.filter(item => item.id !== caughtItem.id);
                     currentNearbyItem = null; 
                     
-                    // 🌟 [문구 변경] 지정해주신 주머니 보관 멘트 적용
-                    showModal(`🎉 <b>발견 및 획득 성공!!</b><br><br>[${caughtItem.name}]을(를) 찾아내어 주머니에 잘 넣어두었습니다.`, () => {
+                    // 🌟 [문구 변경] 요청하신 '배낭 속에 잘 넣어두었습니다.'로 교체
+                    showModal(`🎉 <b>발견 및 획득 성공!!</b><br><br>[${caughtItem.name}]을(를) 찾아내어 배낭 속에 잘 넣어두었습니다.`, () => {
                         checkNearbyItems();
                     });
                 } else {
@@ -307,6 +340,7 @@
             }
         }
 
+        // 배낭 리스트 열기
         async function openInventory() {
             const listContainer = document.getElementById('inventory-list');
             document.getElementById('inventory-screen').style.display = 'block';
@@ -320,16 +354,24 @@
                     const myTreasures = json.data.filter(d => d.userId === currentExplorerName);
                     
                     if (myTreasures.length === 0) {
-                        listContainer.innerHTML = "<div class='inv-empty'>🎒 아직 주머니에 넣은 보물이 없습니다.</div>";
+                        listContainer.innerHTML = "<div class='inv-empty'>🎒 아직 배낭에 넣은 보물이 없습니다.</div>";
                     } else {
                         listContainer.innerHTML = "";
                         myTreasures.reverse().forEach(t => {
                             const dateStr = new Date(t.timestamp).toLocaleString('ko-KR');
                             const card = document.createElement('div');
                             card.className = 'inv-card';
+                            
+                            // 🌟 [UI 개선] 좌측에 이미지를 띄우고 우측에 텍스트를 배치하는 레이아웃 구조화
+                            // 이미지 정보가 없으면 기본 대체 이미지를 띄웁니다.
+                            const imgUrl = t.imageUrl ? t.imageUrl : "https://via.placeholder.com/50?text=💎";
+                            
                             card.innerHTML = `
-                                <div class="inv-card-title">💎 보물: ${t.itemName}</div>
-                                <div class="inv-card-date">📅 발견시간: ${dateStr}</div>
+                                <img src="${imgUrl}" class="inv-card-img" alt="보물">
+                                <div class="inv-card-info">
+                                    <div class="inv-card-title">💎 보물: ${t.itemName}</div>
+                                    <div class="inv-card-date">📅 발견시간: ${dateStr}</div>
+                                </div>
                             `;
                             listContainer.appendChild(card);
                         });
