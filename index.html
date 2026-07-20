@@ -9,18 +9,18 @@
         // =================================================================
         // ⚠️ [가장 중요] 본인의 구글 앱스 스크립트 웹앱 URL을 아래에 넣으세요!
         // =================================================================
-        const GAS_URL = "여기에_아까_복사한_구글_웹앱_주소를_넣으세요"; 
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbwyeammvvEgucRSbx2Fql1W5MFrEESeXDQB3wvjnZpgIUszXwNaJ3pKQcgULIoZkmXc/exec"; 
     </script>
 
     <style>
-        /* html과 body의 높이를 고정하여 배경 이미지가 깨지지 않도록 방지 */
+        /* 화면 높이를 고정하여 모바일 브라우저 튕김 및 배경 깨짐 방지 */
         html, body { width: 100%; height: 100%; margin: 0; padding: 0; }
         
-        /* 🌟 [배경 튜닝] 구글 드라이브 주소 최적화 및 리셋 */
+        /* 🌟 [배경 이미지] 깃허브에 새로 올리신 treasure.jpg 경로 완벽 반영 */
         body { 
             font-family: sans-serif; 
             background-color: #222;
-            background-image: url('https://drive.google.com/uc?id=1U47xmLADk6PUCKF97rNNMxjXBTDyJIWx');
+            background-image: url('https://github.com/hanseunghoon1103-sudo/assetlink/blob/main/treasure.jpg?raw=true');
             background-size: cover;
             background-position: center center;
             background-repeat: no-repeat;
@@ -35,7 +35,7 @@
         #ar-item { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: none; cursor: pointer; transition: transform 0.2s; z-index: 5; }
         #ar-item:active { transform: translate(-50%, -50%) scale(0.8); }
         
-        /* 🌟 [UX 개선] 키보드가 올라와도 가려지지 않게 화면 맨 위쪽(8%)으로 바짝 올림 */
+        /* [UX] 키보드 간섭을 방지하기 위한 최상단(8%) 고정 스타일 */
         #start-screen { width: 100vw; height: 100vh; position: fixed; top: 0; left: 0; z-index: 20; background: rgba(0, 0, 0, 0.3); }
         #start-screen-content {
             position: absolute;
@@ -51,7 +51,7 @@
         .input-field:focus { border-color: #ffcb05; outline: none; }
         .btn { background: #ffcb05; color: #3267b2; border: none; padding: 15px 40px; font-size: 18px; font-weight: bold; border-radius: 25px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
         
-        /* 🌟 [UI 개선] 팝업창 위치를 화면 맨 위에서 1/5 지점(20vh)으로 고정 */
+        /* [UI] 알림 팝업창 위치 화면 최상단 1/5(20vh) 지점 고정 */
         #custom-modal { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.7); z-index: 100; justify-content: center; align-items: flex-start; }
         .modal-content { 
             background: rgba(40, 40, 40, 0.95); 
@@ -67,7 +67,7 @@
         .modal-text { font-size: 16px; color: #fff; line-height: 1.6; margin-bottom: 25px; word-break: keep-all; }
         .modal-btn { background: #ffcb05; color: #3267b2; border: none; padding: 12px 30px; font-size: 16px; font-weight: bold; border-radius: 15px; cursor: pointer; width: 100%; }
 
-        /* 🌟 [UI 개선] 보물 확인 버튼이 한 줄로 예쁘게 나오도록 너비 및 여백 확장 */
+        /* 🌟 [UI 개선] 한 줄 표기 강제 및 너비 자동 확장 세팅 */
         #view-inventory-btn {
             position: fixed;
             bottom: 25px;
@@ -76,7 +76,7 @@
             background: #3267b2;
             color: #ffcb05;
             border: 2px solid #ffcb05;
-            padding: 14px 35px; /* 좌우 패딩을 넓혀 영역 확보 */
+            padding: 14px 35px; 
             font-size: 15px;
             font-weight: bold;
             border-radius: 22px;
@@ -84,8 +84,8 @@
             z-index: 15;
             box-shadow: 0 4px 12px rgba(0,0,0,0.6);
             display: none; 
-            white-space: nowrap; /* 🌟 글자가 두 줄로 절대 쪼개지지 않도록 강제 설정 */
-            width: max-content;  /* 🌟 글자 길이에 맞춰 박스가 부드럽게 늘어남 */
+            white-space: nowrap; /* 글자 줄바꿈 절대 방지 */
+            width: max-content;  /* 글자 길이에 맞춰 가로폭 유연하게 확장 */
         }
 
         /* 보물 리스트 뷰 */
@@ -249,7 +249,7 @@
             }
 
             if (!found) {
-                // 🌟 [문구 변경] 요청하신 대로 괄호 형식을 추가했습니다.
+                // 🌟 [문구 변경] 괄호 포맷 완벽 반영
                 updateStatus(`보물 탐색 중... [탐험가: ${currentExplorerName}]`);
                 document.getElementById('ar-item').style.display = 'none';
                 currentNearbyItem = null;
@@ -272,7 +272,7 @@
             if (!currentNearbyItem) return;
             
             const caughtItem = currentNearbyItem; 
-            // 🌟 [문구 변경] 지정해주신 획득 중 멘트로 변경
+            // 🌟 [문구 변경] 지정해주신 가져오기 멘트 적용
             updateStatus(`[${caughtItem.name}]을(를) 꽉 붙들어 가져오고 있습니다.`); 
             document.getElementById('ar-item').style.display = 'none';
 
@@ -293,8 +293,8 @@
                     items = items.filter(item => item.id !== caughtItem.id);
                     currentNearbyItem = null; 
                     
-                    // 🌟 [문구 변경] 지정해주신 주머니 멘트 적용
-                    showModal(`🎉 <b>발견 및 획득 성공!</b><br><br>[${caughtItem.name}]을(를) 찾아내어 주머니에 잘 넣어두었습니다.`, () => {
+                    // 🌟 [문구 변경] 지정해주신 주머니 보관 멘트 적용
+                    showModal(`🎉 <b>발견 및 획득 성공!!</b><br><br>[${caughtItem.name}]을(를) 찾아내어 주머니에 잘 넣어두었습니다.`, () => {
                         checkNearbyItems();
                     });
                 } else {
