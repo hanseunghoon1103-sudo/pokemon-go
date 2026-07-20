@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>리얼 탐험가 보물찾기 웹앱</title>
     <style>
-        /* 🌟 전체 화면 배경에 제공해주신 드라이브 이미지 반영 */
         body { 
             margin: 0; padding: 0; 
             font-family: sans-serif; 
@@ -24,11 +23,11 @@
         #ar-item { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: none; cursor: pointer; transition: transform 0.2s; z-index: 5; }
         #ar-item:active { transform: translate(-50%, -50%) scale(0.8); }
         
-        /* 🌟 [디자인 변경] 버튼 아랫부분이 화면의 정확한 중간(50%)에 오도록 수식 배치 */
-        #start-screen { width: 100vw; height: 100vh; position: fixed; top: 0; left: 0; z-index: 20; background: rgba(0, 0, 0, 0.4); }
+        /* 🌟 [UX 개선] 모바일 키보드 간섭을 피해 화면 상단 15% 영역으로 대폭 배치 상승 */
+        #start-screen { width: 100vw; height: 100vh; position: fixed; top: 0; left: 0; z-index: 20; background: rgba(0, 0, 0, 0.5); }
         #start-screen-content {
             position: absolute;
-            bottom: 50%; /* 하단 기준선을 화면 중앙(50%)에 고정 */
+            top: 15%; /* 키보드가 올라와도 절대 가려지지 않는 황금 위치 */
             left: 50%;
             transform: translateX(-50%);
             display: flex;
@@ -38,9 +37,9 @@
         
         .input-field { padding: 15px; font-size: 16px; border: 3px solid #3267b2; background: #fff; color: #333; border-radius: 15px; margin-bottom: 15px; width: 220px; text-align: center; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
         .input-field:focus { border-color: #ffcb05; outline: none; }
-        .btn { background: #ffcb05; color: #3267b2; border: none; padding: 15px 40px; font-size: 18px; font-weight: bold; border-radius: 25px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); margin: 0; }
+        .btn { background: #ffcb05; color: #3267b2; border: none; padding: 15px 40px; font-size: 18px; font-weight: bold; border-radius: 25px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
         
-        /* 🌟 [디자인 변경] 알림 팝업창이 위에서부터 1/3(33%) 지점에 표시되도록 조정 */
+        /* 🌟 [UI 개선] 알림 팝업창을 맨 위에서부터 정확히 1/5(20vh) 지점으로 조정 */
         #custom-modal { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.7); z-index: 100; justify-content: center; align-items: flex-start; }
         .modal-content { 
             background: rgba(40, 40, 40, 0.95); 
@@ -51,10 +50,51 @@
             width: 300px; 
             text-align: center; 
             box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
-            margin-top: 33vh; /* 🌟 위에서 1/3 지점으로 내리기 */
+            margin-top: 20vh; /* 1/5 지점 고정 */
         }
         .modal-text { font-size: 16px; color: #fff; line-height: 1.6; margin-bottom: 25px; word-break: keep-all; }
         .modal-btn { background: #ffcb05; color: #3267b2; border: none; padding: 12px 30px; font-size: 16px; font-weight: bold; border-radius: 15px; cursor: pointer; width: 100%; }
+
+        /* 🌟 [신규 UI] 하단 고정 내 보물 확인 버튼 스타일 */
+        #view-inventory-btn {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #3267b2;
+            color: #ffcb05;
+            border: 2px solid #ffcb05;
+            padding: 12px 25px;
+            font-size: 15px;
+            font-weight: bold;
+            border-radius: 20px;
+            cursor: pointer;
+            z-index: 15;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            display: none; /* 게임 시작 후에 노출 */
+        }
+
+        /* 🌟 [신규 UI] 보물 리스트 전체 화면 뷰 */
+        #inventory-screen {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background: rgba(25, 25, 25, 0.98);
+            z-index: 30;
+            overflow-y: auto;
+            box-sizing: border-box;
+            padding: 80px 20px 100px 20px;
+        }
+        .inv-title { font-size: 22px; color: #ffcb05; margin-bottom: 20px; font-weight: bold; }
+        #inventory-list { width: 100%; max-width: 400px; margin: 0 auto; }
+        .inv-card { background: rgba(255,255,255,0.08); padding: 15px; border-radius: 12px; margin-bottom: 12px; text-align: left; border-left: 5px solid #ffcb05; }
+        .inv-card-title { font-size: 16px; font-weight: bold; color: #fff; margin-bottom: 5px; }
+        .inv-card-date { font-size: 12px; color: #aaa; }
+        .inv-empty { font-size: 16px; color: #aaa; margin-top: 50px; }
+        
+        /*계속 탐험하기 하단 바*/
+        .inv-footer { position: fixed; bottom: 0; left: 0; width: 100%; padding: 20px 0; background: rgba(25,25,25,0.95); text-align: center; }
     </style>
 </head>
 <body>
@@ -62,10 +102,9 @@
     <!-- 상단 상태 표시줄 -->
     <div id="status">대기 중... 위치 권한과 카메라 권한이 필요합니다.</div>
 
-    <!-- 시작 화면 구역 -->
+    <!-- 시작 화면 구역 (버튼 높이 최적화) -->
     <div id="start-screen">
         <div id="start-screen-content">
-            <!-- 🌟 탐험가 컨셉 반영 -->
             <input type="text" id="explorer-name" class="input-field" placeholder="탐험가 이름을 입력하세요" maxlength="12">
             <button class="btn" onclick="initGame()">탐험 시작하기 🧭</button>
         </div>
@@ -77,7 +116,20 @@
         <img id="ar-item" src="" alt="보물" onclick="catchItem()">
     </div>
 
-    <!-- 커스텀 모달 레이아웃 (1/3 지점 출현) -->
+    <!-- 🌟 화면 하단 항상 노출되는 내 보물 확인 버튼 -->
+    <button id="view-inventory-btn" onclick="openInventory()">🎒 내가 저장한 보물 확인</button>
+
+    <!-- 🌟 [신규 기능] 보물 리스트 스크린 구역 -->
+    <div id="inventory-screen">
+        <div class="inv-title">🎒 <span id="player-title"></span>의 배낭</div>
+        <div id="inventory-list"><!-- 자바스크립트로 리스트 동적 삽입 --></div>
+        
+        <div class="inv-footer">
+            <button class="btn" onclick="closeInventory()">🧭 계속 탐험하기</button>
+        </div>
+    </div>
+
+    <!-- 커스텀 모달 레이아웃 (1/5 지점 출현) -->
     <div id="custom-modal">
         <div class="modal-content">
             <div id="modal-text" class="modal-text">메시지 내용</div>
@@ -87,15 +139,13 @@
 
     <script>
         // ⚠️ 본인의 구글 앱스 스크립트 웹앱 URL로 교체하세요!
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbwdFH6cFIrwi_RiZKJtGaHgfwn4amFrzjzXUM9sy78RmH6LVAT3556Hk67tEfsKyh6H/exec"; 
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbwyeammvvEgucRSbx2Fql1W5MFrEESeXDQB3wvjnZpgIUszXwNaJ3pKQcgULIoZkmXc/exec"; 
         
         let items = [];
         let userLat = 0;
         let userLng = 0;
         let currentNearbyItem = null;
         let modalCallback = null;
-        
-        // 🌟 탐험가 변수 세팅
         let currentExplorerName = "guest";
 
         function showModal(msg, callback = null) {
@@ -114,18 +164,19 @@
 
         // 게임 초기화
         async function initGame() {
-            // 🌟 탐험가 입력 체크
             const nameInput = document.getElementById('explorer-name').value.trim();
-            
             if (!nameInput) {
                 showModal("🎒 <b>이름 입력 필요</b><br><br>탐험을 시작하기 전에 탐험가 이름을 입력해 주세요!");
                 return;
             }
             
             currentExplorerName = nameInput;
+            document.getElementById('player-title').innerText = currentExplorerName;
 
             document.getElementById('start-screen').style.display = 'none';
             document.getElementById('camera-container').style.display = 'block';
+            // 🌟 탐험 시작 시 하단에 내 보물 확인 버튼 활성화
+            document.getElementById('view-inventory-btn').style.display = 'block'; 
             updateStatus("구글 시트에서 보물 정보를 불러오는 중...");
 
             try {
@@ -222,10 +273,10 @@
             if (!currentNearbyItem) return;
             
             const caughtItem = currentNearbyItem; 
-            updateStatus(`진행 중... ${caughtItem.name} 획득 중!`);
+            // 🌟 [텍스트 변경] 지정해주신 문구 적용
+            updateStatus(`${caughtItem.name}을 잡아들이고 있습니다...`); 
             document.getElementById('ar-item').style.display = 'none';
 
-            // 🌟 탐험가 이름 매칭 전송
             const payload = {
                 userId: currentExplorerName,
                 itemId: caughtItem.id,
@@ -243,8 +294,8 @@
                     items = items.filter(item => item.id !== caughtItem.id);
                     currentNearbyItem = null; 
                     
-                    // 🌟 위에서 1/3 지점에 나타나는 모달 창 메시지
-                    showModal(`🎉 <b>발견 및 획득 성공!</b><br><br>[${caughtItem.name}]을(를) 찾아내어 저장목록에 기록했습니다.`, () => {
+                    // 🌟 [텍스트 변경] 지정해주신 획득 문구 적용 (1/5 지점에 모달 노출)
+                    showModal(`🎉 <b>발견 및 획득 성공!</b><br><br>[${caughtItem.name}]을(를) 찾아내어 주머니에 잘 넣어두었습니다.`, () => {
                         checkNearbyItems();
                     });
                 } else {
@@ -255,6 +306,50 @@
                 currentNearbyItem = null; 
                 showModal(`⚠️ <b>통신 에러</b><br><br>네트워크 연결이 원활하지 않아 보물을 놓쳤습니다.`);
             }
+        }
+
+        // 🌟 [신규 기능] 실시간 스프레드시트 연동 내 보물 확인 로직
+        async function openInventory() {
+            const listContainer = document.getElementById('inventory-list');
+            document.getElementById('inventory-screen').style.display = 'block';
+            listContainer.innerHTML = "<div class='inv-empty'>배낭을 열어보고 있습니다... 🎒</div>";
+            
+            try {
+                // 구글 시트 저장목록을 읽어오기 위해 action 파라미터 전달
+                const res = await fetch(`${GAS_URL}?action=getInventory`);
+                const json = await res.json();
+                
+                if (json.status === "success") {
+                    // 현재 로그인한 탐험가 이름과 일치하는 내역만 필터링
+                    const myTreasures = json.data.filter(d => d.userId === currentExplorerName);
+                    
+                    if (myTreasures.length === 0) {
+                        listContainer.innerHTML = "<div class='inv-empty'>🎒 아직 주머니에 넣은 보물이 없습니다.</div>";
+                    } else {
+                        listContainer.innerHTML = "";
+                        // 최신 순으로 위에 보이게 리버스 정렬
+                        myTreasures.reverse().forEach(t => {
+                            const dateStr = new Date(t.timestamp).toLocaleString('ko-KR');
+                            const card = document.createElement('div');
+                            card.className = 'inv-card';
+                            card.innerHTML = `
+                                <div class="inv-card-title">💎 보물: ${t.itemName}</div>
+                                <div class="inv-card-date">📅 발견시간: ${dateStr}</div>
+                            `;
+                            listContainer.appendChild(card);
+                        });
+                    }
+                } else {
+                    listContainer.innerHTML = "<div class='inv-empty'>배낭 데이터를 가져오지 못했습니다.</div>";
+                }
+            } catch (err) {
+                listContainer.innerHTML = "<div class='inv-empty'>네트워크 오류로 배낭을 열지 못했습니다.</div>";
+            }
+        }
+
+        // 🌟 [신규 기능] 계속 탐험하기 버튼 로직
+        function closeInventory() {
+            document.getElementById('inventory-screen').style.display = 'none';
         }
 
         function updateStatus(msg) {
