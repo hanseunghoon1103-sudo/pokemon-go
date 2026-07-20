@@ -7,7 +7,7 @@
     
     <script>
         // =================================================================
-        // ⚠️ [가장 중요] 本人의 구글 앱스 스크립트 웹앱 URL을 아래에 넣으세요!
+        // ⚠️ [가장 중요] 본인의 구글 앱스 스크립트 웹앱 URL을 아래에 넣으세요!
         // =================================================================
         const GAS_URL = "https://script.google.com/macros/s/AKfycbw29yoTGd3jErAGBo-WOSa53t5CfYWdGGUx0dTKuyu4oQLvmRKvAV4N6sk9RKQbt9Ku/exec"; 
     </script>
@@ -30,7 +30,16 @@
         #camera-container { width: 100vw; height: 100vh; position: relative; overflow: hidden; background: transparent; }
         video { width: 100%; height: 100%; object-fit: cover; }
         
-        #ar-item { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: none; cursor: pointer; transition: transform 0.2s; z-index: 5; }
+        #ar-item { 
+            position: absolute; 
+            top: 30%; 
+            left: 50%; 
+            transform: translate(-50%, -50%); 
+            display: none; 
+            cursor: pointer; 
+            transition: transform 0.2s; 
+            z-index: 5; 
+        }
         #ar-item:active { transform: translate(-50%, -50%) scale(0.8); }
         
         #start-screen { width: 100vw; height: 100vh; position: fixed; top: 0; left: 0; z-index: 20; background: rgba(0, 0, 0, 0.3); }
@@ -83,7 +92,6 @@
             width: max-content;  
         }
 
-        /* 🌟 [배낭 고정 뷰] 모바일 터치 스크롤 꼬임 방지를 위한 전체 레이아웃 구조 개편 */
         #inventory-screen {
             display: none;
             position: fixed;
@@ -96,20 +104,18 @@
         }
         .inv-title { font-size: 20px; color: #ffcb05; margin-bottom: 15px; font-weight: bold; }
         
-        /* 🌟 [스크롤 특화 박스] 상/하단 바를 제외한 본문 영역에만 절대 스크롤 부여 */
         #inventory-scroll-box {
             width: 100%;
             max-width: 420px;
             margin: 0 auto;
-            height: calc(100vh - 200px); /* 헤더, 푸터 높이를 제외한 가변 높이 */
+            height: calc(100vh - 200px); 
             overflow-y: auto;
-            -webkit-overflow-scrolling: touch; /* iOS 부드러운 스크롤 보장 */
+            -webkit-overflow-scrolling: touch; 
             padding-right: 5px;
         }
         
         #inventory-list { width: 100%; }
         
-        /* 🌟 [인벤토리 카드 디자인] 좌측 이미지 배치를 위한 Flex 레이아웃 도입 */
         .inv-card { 
             background: rgba(255,255,255,0.08); 
             padding: 12px; 
@@ -157,12 +163,10 @@
 
     <button id="view-inventory-btn" onclick="openInventory()">🎒 내가 저장한 보물 확인</button>
 
-    <!-- 보물 리스트 스크린 (독립형 스크롤 시스템 적용) -->
+    <!-- 보물 리스트 스크린 -->
     <div id="inventory-screen">
-        <!-- 🌟 [문구 변경] 명칭을 대괄호 형식으로 변경 -->
         <div class="inv-title">🎒 [<span id="player-title"></span>]님의 배낭</div>
         
-        <!-- 🌟 독립 스크롤 컨테이너 적용 구역 -->
         <div id="inventory-scroll-box">
             <div id="inventory-list"></div>
         </div>
@@ -187,6 +191,9 @@
         let currentNearbyItem = null;
         let modalCallback = null;
         let currentExplorerName = "guest";
+        
+        // 🌟 [신규 변수] 보물을 구글 서버로 전송 중인지 판별하는 플래그
+        let isCatching = false;
 
         function showModal(msg, callback = null) {
             document.getElementById('modal-text').innerHTML = msg;
@@ -215,8 +222,18 @@
             document.getElementById('start-screen').style.display = 'none';
             document.getElementById('camera-container').style.display = 'block';
             document.getElementById('view-inventory-btn').style.display = 'block'; 
-            updateStatus("구글 시트에서 보물 정보를 불러오는 중...");
+            
+            updateStatus("카메라 및 탐험 장비 연결 중...");
+            const cameraReady = await startCamera();
+            
+            if (!cameraReady) {
+                document.getElementById('start-screen').style.display = 'block';
+                document.getElementById('camera-container').style.display = 'none';
+                document.getElementById('view-inventory-btn').style.display = 'none';
+                return;
+            }
 
+            updateStatus("구글 시트에서 보물 정보를 안전하게 불러오는 중...");
             try {
                 const res = await fetch(GAS_URL);
                 const json = await res.json();
@@ -224,7 +241,6 @@
                     items = json.data;
                     updateStatus(`반가워요, ${currentExplorerName} 탐험가님! GPS 연결 중...`);
                     startLocationTracking();
-                    startCamera();
                 }
             } catch (err) {
                 updateStatus("보물 로딩 실패: " + err);
@@ -235,8 +251,10 @@
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
                 document.getElementById('video').srcObject = stream;
+                return true;
             } catch (err) {
                 showModal("📷 카메라 권한이 필요하거나<br>지원하지 않는 브라우저입니다.");
+                return false;
             }
         }
 
@@ -269,13 +287,16 @@
         }
 
         function checkNearbyItems() {
+            // 🌟 [버그 해결 핵심] 보물을 전송(가져오기) 중일 때는 GPS 레이더가 메시지를 덮어쓰지 못하게 전면 차단
+            if (isCatching) return; 
+            
             let found = false;
             
             for (let item of items) {
                 const dist = getDistance(userLat, userLng, item.latitude, item.longitude);
                 
                 if (dist <= item.radius) {
-                    updateStatus(`🚨 근처에 [${item.name}]이(가) 나타났습니다! (거리: ${Math.round(dist)}m)`);
+                    updateStatus("🚨 근처에 보물이 감지되었습니다!");
                     showARItem(item);
                     found = true;
                     break; 
@@ -289,7 +310,6 @@
             }
         }
 
-        // 화면에 아이템 띄우기
         function showARItem(item) {
             if (currentNearbyItem?.id === item.id) return;
             currentNearbyItem = item;
@@ -303,9 +323,12 @@
         }
 
         async function catchItem() {
-            if (!currentNearbyItem) return;
+            // 가져오는 도중 또 터치하는 중복 클릭 방지 세팅 포함
+            if (!currentNearbyItem || isCatching) return;
             
+            isCatching = true; // 🌟 가져오기 프로세스 시작 (GPS 상단 텍스트 제어 잠금)
             const caughtItem = currentNearbyItem; 
+            
             updateStatus(`[${caughtItem.name}]을(를) 꽉 붙들어 가져오고 있습니다.`); 
             document.getElementById('ar-item').style.display = 'none';
 
@@ -326,21 +349,22 @@
                     items = items.filter(item => item.id !== caughtItem.id);
                     currentNearbyItem = null; 
                     
-                    // 🌟 [문구 변경] 요청하신 '배낭 속에 잘 넣어두었습니다.'로 교체
                     showModal(`🎉 <b>발견 및 획득 성공!!</b><br><br>[${caughtItem.name}]을(를) 찾아내어 배낭 속에 잘 넣어두었습니다.`, () => {
+                        isCatching = false; // 🌟 유저가 팝업 [확인]을 눌러 완전히 끝났을 때 비로소 잠금 해제
                         checkNearbyItems();
                     });
                 } else {
                     currentNearbyItem = null; 
+                    isCatching = false; // 실패 시 잠금 해제
                     showModal(`❌ <b>저장 실패</b><br><br>${json.message}`);
                 }
             } catch (err) {
                 currentNearbyItem = null; 
+                isCatching = false; // 에러 시 잠금 해제
                 showModal(`⚠️ <b>통신 에러</b><br><br>네트워크 연결이 원활하지 않아 보물을 놓쳤습니다.`);
             }
         }
 
-        // 배낭 리스트 열기
         async function openInventory() {
             const listContainer = document.getElementById('inventory-list');
             document.getElementById('inventory-screen').style.display = 'block';
@@ -361,9 +385,6 @@
                             const dateStr = new Date(t.timestamp).toLocaleString('ko-KR');
                             const card = document.createElement('div');
                             card.className = 'inv-card';
-                            
-                            // 🌟 [UI 개선] 좌측에 이미지를 띄우고 우측에 텍스트를 배치하는 레이아웃 구조화
-                            // 이미지 정보가 없으면 기본 대체 이미지를 띄웁니다.
                             const imgUrl = t.imageUrl ? t.imageUrl : "https://via.placeholder.com/50?text=💎";
                             
                             card.innerHTML = `
