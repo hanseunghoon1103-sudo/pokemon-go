@@ -7,7 +7,7 @@
     
     <script>
         // =================================================================
-        // 🌟 [배포 주소 고정] 지정해주신 구글 앱스 스크립트 웹앱 URL이 반영되었습니다.
+        // 🌟 구글 앱스 스크립트 웹앱 고정 URL
         // =================================================================
         const GAS_URL = "https://script.google.com/macros/s/AKfycbw29yoTGd3jErAGBo-WOSa53t5CfYWdGGUx0dTKuyu4oQLvmRKvAV4N6sk9RKQbt9Ku/exec"; 
     </script>
@@ -92,29 +92,30 @@
             width: max-content;  
         }
 
+        /* 🌟 [CSS 대개조] 모바일 브라우저 툴바 버그 방지를 위해 사방을 상하좌우(0)로 단단히 고정 */
         #inventory-screen {
             display: none;
             position: fixed;
-            top: 0; left: 0;
-            width: 100vw; height: 100vh;
+            top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(25, 25, 25, 0.98);
             z-index: 30;
             box-sizing: border-box;
-            padding: 75px 20px 95px 20px;
         }
-        .inv-title { font-size: 20px; color: #ffcb05; margin-bottom: 15px; font-weight: bold; }
+        .inv-title { font-size: 20px; color: #ffcb05; font-weight: bold; padding-top: 25px; height: 30px; }
         
+        /* 🌟 [CSS 대개조] 100vh 계산을 빼버리고 상단 타이틀 밑(70px)부터 하단 버튼 위(90px)까지 절대 영역을 지정해 스크롤을 강제 활성화 */
         #inventory-scroll-box {
-            width: 100%;
-            max-width: 420px;
-            margin: 0 auto;
-            height: calc(100vh - 200px); 
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch; 
-            padding-right: 5px;
+            position: absolute;
+            top: 70px;
+            bottom: 90px;
+            left: 20px;
+            right: 20px;
+            overflow-y: scroll; /* auto 대신 항상 스크롤바 작동 보장 */
+            -webkit-overflow-scrolling: touch; /* 아이폰 가속 스크롤 활성화 */
+            touch-action: pan-y; /* 모바일 크롬/사파리에게 세로 드래그 허용 선언 */
         }
         
-        #inventory-list { width: 100%; }
+        #inventory-list { width: 100%; max-width: 420px; margin: 0 auto; padding-bottom: 20px; }
         
         .inv-card { 
             background: rgba(255,255,255,0.08); 
@@ -140,7 +141,7 @@
         .inv-card-date { font-size: 11px; color: #aaa; }
         
         .inv-empty { font-size: 16px; color: #aaa; margin-top: 50px; }
-        .inv-footer { position: fixed; bottom: 0; left: 0; width: 100%; padding: 18px 0; background: rgba(25,25,25,0.95); text-align: center; }
+        .inv-footer { position: fixed; bottom: 0; left: 0; width: 100%; padding: 18px 0; background: rgba(25,25,25,0.95); text-align: center; height: 50px; }
     </style>
 </head>
 <body>
@@ -167,6 +168,7 @@
     <div id="inventory-screen">
         <div class="inv-title">🎒 [<span id="player-title"></span>]님의 배낭</div>
         
+        <!-- 강제 스크롤 절대 구역 -->
         <div id="inventory-scroll-box">
             <div id="inventory-list"></div>
         </div>
